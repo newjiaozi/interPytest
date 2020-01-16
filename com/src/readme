@@ -1,0 +1,36 @@
+接口地址	   endpoint  	method	    headers 	cookie	    data	    params	    checkpoints	    scene_desc	    exec	    locust	     store_repsonse	    resp_body	    pass
+ host       接口路径    get或者post    头信息        缓存      请求body  querystring      检查点            场景描述     是否执行     是否性能测试    需要保存的响应值   请求响应  是否通过
+
+ 举例：
+接口地址：
+https://www.baidu.com
+endpoint:
+/get/something
+methdo:
+GET 或者POST
+headers ：
+{"Content-type":"application/json"}
+{"NEO_SES":"${getSES()}"}  会从tools中找到对应的getSES() 获取对应的值，替换该value
+{"NEO_SES":"$getSES"}  会默认从running.ini找到对应的getSES对应的值，替换该value
+cookie：
+{"session":"qsdfasdfasd"}
+{"NEO_SES":"${getSES()}"}  会从tools中找到对应的getSES() 获取对应的值，替换该value
+{"NEO_SES":"$getSES"}  会默认从running.ini找到对应的getSES对应的值，替换该value
+data：
+{"data":"oo"}
+{"NEO_SES":"${getSES()}"}  会从tools中找到对应的getSES() 获取对应的值，替换该value
+{"NEO_SES":"$getSES"}  会默认从running.ini找到对应的getSES对应的值，替换该value
+params：
+{"params":"params"}
+{"NEO_SES":"${getSES()}"}  会从tools中找到对应的getSES() 获取对应的值，替换该value
+{"NEO_SES":"$getSES"}  会默认从running.ini找到对应的getSES对应的值，替换该value
+checkpoints：
+{"$.results.success":"success"} "$.results.success"为，json expresss ，后续处理是通过他找到响应中对应的值，"success"为对应jsonpath下的预期结果
+scene_desc：
+发送验证码接口
+exec：
+yes/no
+locust：
+yes/no
+store_repsonse：
+{"$.results.session":"session"}  "$.results.session"为，json expresss ，后续处理是通过他找到响应中对应的值，"session"为需要保存在running.ini里面的key
