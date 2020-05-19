@@ -7,7 +7,7 @@ from com.src.test.logger import logger
 from com.src.test.config import Config
 from com.src.test.interface import getExpiresMd5
 from com.src.test.handleSqlite import updateTmp,getCursor,getTmp
-
+from com.src.test.handleRedis import deleteCommentRedis
 
 conn,cursor = getCursor()
 
@@ -19,8 +19,8 @@ def initParams(excel ="testcase.xlsx"):
 
 
 ## 读取excel获取测试用例,返回数据格式为[[row1],[row2],[row3]]
-def getTestData():
-    case_result = initParams()
+def getTestData(excel ="testcase.xlsx"):
+    case_result = initParams(excel)
     wb = load_workbook(case_result)
     sheet = wb.active
     data_tuple = tuple(sheet.rows)[1:]
@@ -40,26 +40,33 @@ def parseData(data_tuple):
     return a_list
 
 ## 根据case数据进行接口请求
-def requestAction(params):
-    params_dict = parseParams(params)
+def requestAction(params,headerType=""):
+    params_dict = parseParams(params,headerType)
+    # logger.info(params_dict)
     if params_dict["method"]== "POST":
         resp = requests.request(params_dict["method"],params_dict['url'],data=params_dict['data'],params=params_dict["payload"],cookies=params_dict["cookies"],headers= params_dict["headers"],verify=False)
         # resp = requests.request(params_dict["method"],params_dict['url'],json=params_dict['data'],params=params_dict["payload"],cookies=params_dict["cookies"],headers= params_dict["headers"],verify=False)
     else:
         resp = requests.request(params_dict["method"],params_dict['url'],params=params_dict["payload"],cookies=params_dict["cookies"],headers= params_dict["headers"],verify=False)
 
+    # logger.info(resp.request.url)
     updateTmp(conn, cursor, "response", resp.text)
     updateTmp(conn, cursor, "url", resp.url)
     updateTmp(conn,cursor,"scene",params_dict["desc"])
-
     if resp.ok:
+
         resp_json = resp.json()
+        if resp_json.get("code",None) == 10005:
+            deleteCommentRedis()
+            return requestAction(params,headerType)
         store_resp = params_dict["store_resp"]
         check_point = params_dict["checks"]
         if store_resp:
             handleStoreResponse(resp_json,store_resp)
         if check_point:
             return checkResut(resp_json,check_point)
+        else:
+            return True
     else:
         logger.info(resp.url)
         return False
@@ -67,11 +74,11 @@ def requestAction(params):
 ##解析每一个case，params为一行数据
 ## 如果对应的value中有格式如下"${getRandomMobileNum}",需要调取getRandomMobileNum方法获取返回值，替换该值；
 ## 如果对应的value中有格式如下"$session",session的值替换该值。
-def parseParams(params):
+def parseParams(params,headerType):
     path_url = ""
     host_url =Config("httphost")
     method =""
-    headers=handleUSD(Config("headers"))
+    headers=handleUSD(Config("headers",headerType=headerType))
     cookies=handleUSD(Config("cookies"))
     data={}
     payload=handleUSD(Config("baseparams"))
@@ -89,7 +96,7 @@ def parseParams(params):
     if params[1]:
         method = params[1].strip()
     ## data
-    elif params[2]:
+    if params[2]:
         data = eval(params[2].strip())
         data = handleUSD(data)
     ##params payload

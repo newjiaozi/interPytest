@@ -37,7 +37,7 @@ def setConfig(section,option,value,ini="session.ini"):
         conf.write(open(ini,"r+"))
         time.sleep(5)
 
-def Config(key,section="headers"):
+def Config(key,section="headers",headerType=""):
     host = getConfig(section,"host")
     httphost = getConfig(section,"httphost")
     phone_uuid = getConfig(section,"phone_uuid")
@@ -47,7 +47,14 @@ def Config(key,section="headers"):
     loginType = getConfig(section,"loginType")
     env = getConfig(section,"env")
     userAgent = getConfig(section,"userAgent")
-    config = {"headers":{"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8",
+    if headerType == "json":
+        ct =  "application/json; charset=UTF-8"
+    else:
+        ct = "application/x-www-form-urlencoded; charset=UTF-8"
+
+    config = {"headers":{
+                        # "Content-Type":"application/x-www-form-urlencoded; charset=UTF-8",
+                         "Content-Type": ct,
                          "HOST":host,
                          "Accept-Language":"zh-CN",
                          "user-agent":userAgent

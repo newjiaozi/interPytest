@@ -28,15 +28,13 @@ def deleteResultsFiles():
     # deleteFiles(screenshots_path)
     deleteFiles(resultszip_path)
 
-def handleHtml(report_name):
-    result_path = os.path.join(os.path.dirname(__file__), "results","%s.html" % report_name)
+def handleHtml(report_name="report"):
+    result_path = os.path.join(os.path.dirname(__file__), "..","results","%s.html" % report_name)
     soup = BeautifulSoup(open(result_path,"r"), "html.parser")
     a = soup.findAll("div",class_="popup_window")
     for i in a:
         i.extract()
     return soup
-
-
 
 def make_zip(source_dir,output_filename):
     zipf = zipfile.ZipFile(output_filename, 'w')
@@ -48,16 +46,16 @@ def make_zip(source_dir,output_filename):
             zipf.write(pathfile, arcname)
     zipf.close()
 
-def sendMail(now_time,report_name,source="results",output="results_%s.zip"):
+def sendMail(report_name="report"):
     '''
     'gjhpbxfvvuxhdhid'
     'dxnuqtwtnqngdjbi'
     '''
 
-    source = os.path.join(os.path.dirname(__file__),source)
-    output = output % now_time
-    output = os.path.join(os.path.dirname(__file__),"resultszip",output)
-    make_zip(source,output)
+    # source = os.path.join(os.path.dirname(__file__),source)
+    # output = output % now_time
+    # output = os.path.join(os.path.dirname(__file__),"resultszip",output)
+    # make_zip(source,output)
     # sender = '2415824179@qq.com'
     # smtpserver = 'smtp.qq.com'
     # password = 'gjhpbxfvvuxhdhid'
@@ -86,18 +84,18 @@ def sendMail(now_time,report_name,source="results",output="results_%s.zip"):
     mail_html = handleHtml(report_name)
     message.attach(MIMEText('测试结果见报告', 'plain', 'utf-8'))
     message.attach(MIMEText(mail_html, 'html', 'utf-8'))
-
+    result_path = os.path.join(os.path.dirname(__file__), "..", "results", "%s.html" % report_name)
     try:
         smtp = smtplib.SMTP()
         # smtp = smtplib.SMTP_SSL(smtpserver)  # 注意：如果遇到发送失败的情况（提示远程主机拒接连接），这里要使用SMTP_SSL方法
-        smtp.set_debuglevel(1)
+        # smtp.set_debuglevel(1)
         smtp.connect(smtpserver)
         smtp.login(sender, password)
-        with open(output, 'rb') as f:
+        with open(result_path, 'rb') as f:
             # 这里附件的MIME和文件名
-            mime = MIMEBase('zip', 'zip', filename=report_name)
+            mime = MIMEBase('html', 'html', filename=report_name)
             # 加上必要的头信息
-            mime.add_header('Content-Disposition', 'attachment', filename=('utf-8', '', "%s.zip" % report_name))
+            mime.add_header('Content-Disposition', 'attachment', filename=('utf-8', '', "%s.html" % report_name))
             mime.add_header('Content-ID', '<0>')
             mime.add_header('X-Attachment-Id', '0')
             # 把附件的内容读进来
@@ -105,7 +103,7 @@ def sendMail(now_time,report_name,source="results",output="results_%s.zip"):
             # 用Base64编码
             encoders.encode_base64(mime)
             message.attach(mime)
-        # smtp.sendmail(sender, receiver.split(","), message.as_string())
+        smtp.sendmail(sender, receiver.split(","), message.as_string())
         smtp.sendmail(sender,toList, message.as_string())
 
     except Exception:
